@@ -57,14 +57,6 @@ lib::h_bridge left_bridge;
 lib::h_bridge arm;
 lib::h_bridge claw;
 
-//Definition dont ont besoin les moteurs
-right_bridge = lib::h_bridge(13, 12);
-left_bridge = lib::h_bridge(11, 10);
-
-//Moteurs du bras
-arm = lib::h_bridge(7, 6);
-claw = lib::h_bridge(9, 8);
-
 //Variables diverses
 int points = 0; //Nombre de points durant la partie
 bool claw_opened = false; //Correspond a l'etat d'ouverture du bras
@@ -87,6 +79,16 @@ int analog2digital(int input) {
 }
 
 void setup() {
+
+
+//Definition dont ont besoin les moteurs
+right_bridge = lib::h_bridge(13, 12);
+left_bridge = lib::h_bridge(11, 10);
+
+//Moteurs du bras
+arm = lib::h_bridge(7, 6);
+claw = lib::h_bridge(9, 8);
+
   //Initialisation de l'ecran
 
   lcd.begin(16, 2);
@@ -141,7 +143,7 @@ void loop() {
     arm.brake();
   }
   else if (analog2digital(analogRead(joy_arm_x)) == -1) {
-    arm.backword();
+    arm.backward();
     delay(precision);
     arm.brake();
   }
@@ -152,7 +154,7 @@ void loop() {
       claw.brake();
     }
     else {
-      claw.backword();
+      claw.backward();
       delay(1000);
       claw.brake();
     }
