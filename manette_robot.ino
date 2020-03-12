@@ -1,3 +1,5 @@
+#include <LiquidCrystal.h>
+
 namespace lib {
 class h_bridge {
 public:
@@ -32,8 +34,45 @@ private:
 };
 }
 
+
+//Initialisation de l'ecran
+const int rs = 0, en = 1, d4 = 2, d5 = 3, d6 = 4, d7 = 5;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+
+//Definiton entree joystick moteurs
+const int joy_motor_x = A0; // Entree analogique
+const int joy_motor_y = A1; // Entree analogique
+
+//Definition entree joystick bras
+const int joy_arm_x = A2; // Entree analogique
+const int joy_arm_button = A3; // Entree numerique
+
+//Definition des boutons pour compter les points
+const int more_five = A4; // Entree numerique
+const int more_one = A5; // Entree numerique
+
 lib::h_bridge right_bridge;
 lib::h_bridge left_bridge;
+lib::h_bridge arm;
+lib::h_bridge claw;
+
+//Definition dont ont besoin les moteurs
+right_bridge = lib::h_bridge(13, 12);
+left_bridge = lib::h_bridge(11, 10);
+
+//Moteurs du bras
+arm = lib::h_bridge(7, 6);
+claw = lib::h_bridge(9, 8);
+
+//Variables diverses
+int points = 0; //Nombre de points durant la partie
+bool claw_opened = false; //Correspond a l'etat d'ouverture du bras
+int precision = 100; //Temps en ms entre la mise en mouvemement et l'arret d'un moteur
+
+void displayPoints(int points) {
+  lcd.print("Points : " + String(points));
+}
 
 int analog2digital(int input) {
   if (input > 1000) {
@@ -47,41 +86,21 @@ int analog2digital(int input) {
   }
 }
 
-void displayPoints(int points) {
-  //Gerer l'ecran et afficher le nombre de points
-}
-
 void setup() {
-  //Definiton entree joystick moteurs
-  const int joy_motor_x = A0; // Entree analogique
-  const int joy_motor_y = A1; // Entree analogique
+  //Initialisation de l'ecran
 
+  lcd.begin(16, 2);
+  lcd.print("Bienvenue");
+  
   pinMode(joy_motor_x, INPUT);
   pinMode(joy_motor_y, INPUT);
-
-  //Definition entree joystick bras
-  const int joy_arm_x = A2; // Entree analogique
-  const int joy_arm_button = 9; // Entree numerique
-  bool arm_opened = false; //Correspond a l'etat d'ouverture du bras
 
   pinMode(joy_arm_x, INPUT);
   pinMode(joy_arm_button, INPUT);
   digitalWrite(joy_arm_button, HIGH);
 
-  //Definition des boutons pour compter les points
-  const int more_five = 8; // Entree numerique
-  const int more_one = 7; // Entree numerique
-  int points = 0; //Nombre de points durant la partie
-
   pinMode(more_five, INPUT);
   pinMode(more_one, INPUT);
-
-  //Definition des pins de gestion de l'ecran
-  // (Aucune idee des pins dont on a besoin XD
-
-  //Definition dont ont besoin les moteurs
-  right_bridge = lib::h_bridge(13, 12);
-  left_bridge = lib::h_bridge(11, 10);
 }
 
 void loop() {
@@ -91,34 +110,51 @@ void loop() {
     //Fait avancer les 2 moteurs
     right_bridge.forward();
     left_bridge.forward();
+    delay(precision);
+    right_bridge.brake();
+    left_bridge.brake();
   }
   else if (analog2digital(analogRead(joy_motor_x)) == -1) {
     //Fait reculer les 2 moteurs
     right_bridge.backward();
     left_bridge.backward();
+    delay(precision);
+    right_bridge.brake();
+    left_bridge.brake();
   }
   //Action de l'axe Y
   if (analog2digital(analogRead(joy_motor_y)) == 1) {
     left_bridge.forward(); //Fait tourner le robot vers la droite
+    delay(precision);
+    left_bridge.brake();
   }
   else if (analog2digital(analogRead(joy_motor_y)) == -1) {
     right_bridge.forward(); //Fait tourner le robot vers la gauche
+    delay(precision);
+    right_bridge.brake();
   }
 
   //----- Lecture des infos pour les moteurs du bras -----
   if (analog2digital(analogRead(joy_arm_x)) == 1) {
-    //Envoyer info au moteur pour lever le bras
+    arm.forward();
+    delay(precision);
+    arm.brake();
   }
   else if (analog2digital(analogRead(joy_arm_x)) == -1) {
-    //Envoyer info au moteur pour baisser le bras
+    arm.backword();
+    delay(precision);
+    arm.brake();
   }
   if (digitalRead(joy_arm_button)) {
-    //Envoyer info au moteur pour fermer le bras ou l'ouvrir
-    if (arm_opened) {
-      //Fermer le bras
+    if (claw_opened) {
+      claw.forward();
+      delay(1000);
+      claw.brake();
     }
     else {
-      //Ouvrir le bras
+      claw.backword();
+      delay(1000);
+      claw.brake();
     }
   }
 
