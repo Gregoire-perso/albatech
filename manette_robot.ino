@@ -46,11 +46,11 @@ const int joy_motor_y = A1; // Entree analogique
 
 //Definition entree joystick bras
 const int joy_arm_x = A2; // Entree analogique
-const int joy_arm_button = A3; // Entree numerique
+const int joy_arm_button = A3; // Entree numerique utilisant un pin analogique
 
 //Definition des boutons pour compter les points
-const int more_five = A4; // Entree numerique
-const int more_one = A5; // Entree numerique
+const int more_five = A4; // Entree numerique utilisant un pin analogique
+const int more_one = A5; // Entree numerique utilisant un pin analogique
 
 lib::h_bridge right_bridge;
 lib::h_bridge left_bridge;
@@ -62,8 +62,8 @@ int points = 0; //Nombre de points durant la partie
 bool claw_opened = false; //Correspond a l'etat d'ouverture du bras
 int precision = 100; //Temps en ms entre la mise en mouvemement et l'arret d'un moteur
 
-void displayPoints(int points) {
-  lcd.print("Points : " + String(points));
+void displayPoints(int points, int seconds) {
+  lcd.print("Points : " + String(points) + ", " + String(seconds) + " sec");
 }
 
 int analog2digital(int input) {
@@ -79,18 +79,15 @@ int analog2digital(int input) {
 }
 
 void setup() {
+  //Definition dont ont besoin les moteurs
+  right_bridge = lib::h_bridge(13, 12);
+  left_bridge = lib::h_bridge(11, 10);
 
-
-//Definition dont ont besoin les moteurs
-right_bridge = lib::h_bridge(13, 12);
-left_bridge = lib::h_bridge(11, 10);
-
-//Moteurs du bras
-arm = lib::h_bridge(7, 6);
-claw = lib::h_bridge(9, 8);
+  //Moteurs du bras
+  arm = lib::h_bridge(7, 6);
+  claw = lib::h_bridge(9, 8);
 
   //Initialisation de l'ecran
-
   lcd.begin(16, 2);
   lcd.print("Bienvenue");
   
@@ -147,7 +144,7 @@ void loop() {
     delay(precision);
     arm.brake();
   }
-  if (digitalRead(joy_arm_button)) {
+  if (analog2digital(analogRead(joy_arm_button))) {
     if (claw_opened) {
       claw.forward();
       delay(1000);
@@ -161,12 +158,12 @@ void loop() {
   }
 
   //Lecture concernant les boutons
-  if (digitalRead(more_five)) {
+  if (analog2digital(analogRead(more_five))) {
     points += 5;
-    displayPoints(points);
+    displayPoints(points, millis() * pow(10, -3));
   }
-  if (digitalRead(more_one)) {
+  if (analog2digital(analogRead(more_one))) {
     points ++;
-    displayPoints(points);
+    displayPoints(points, millis() * pow(10, -3));
   }
 }
